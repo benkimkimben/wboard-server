@@ -7,7 +7,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
-import com.wboard.server.helper.LoggerHelper;
+import com.wboard.common.util.LoggerHelper;
 
 public class ServerLogger {
 	private static FileHandler logFileHandler;
