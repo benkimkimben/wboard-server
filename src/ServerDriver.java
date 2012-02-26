@@ -1,5 +1,7 @@
-import com.wboard.common.conf.ConfigException;
-import com.wboard.common.conf.Configuration;
+import java.io.IOException;
+
+import org.apache.hadoop.conf.Configuration;
+
 import com.wboard.server.Server;
 import com.wboard.server.WBoardServer;
 
@@ -10,18 +12,18 @@ public class ServerDriver {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		Configuration sc;
+		Configuration conf;
+		conf = new Configuration();
+		conf.addResource("server.xml");
+
 		Server wbs = null;
-		try {
-			sc = new Configuration();
-			wbs = new WBoardServer(sc);
-			wbs.run();
-			
-		} catch (ConfigException e) {
-			e.printStackTrace();
-		}finally{
-			if(wbs != null) wbs.stop("Server exiting");
-		}
 		
+		try {
+			wbs = new WBoardServer(conf);
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(0);
+		}
+		wbs.run();
 	}
 }

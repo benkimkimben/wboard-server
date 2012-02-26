@@ -1,8 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<Server host="10.250.65.54" port="5000">
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 
-
-	<Log>
-		<LogFile path="/logs" />
-	</Log>
-</Server>
+<configuration>
+	<property>
+		<name>wboard.server.host</name>
+		<value>localhost</value>
+	</property>
+	<property>
+		<name>wboard.server.port</name>
+		<value>5000</value>
+	</property>
+	<property>
+		<name>wboard.server.log.path</name>
+		<value>/logs</value>
+	</property>
+</configuration>

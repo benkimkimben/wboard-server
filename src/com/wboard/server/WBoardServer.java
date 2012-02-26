@@ -6,20 +6,20 @@ import java.util.ArrayList;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.ipc.HBaseRPC;
+import org.apache.hadoop.hbase.ipc.RpcServer;
 import org.apache.hadoop.hbase.util.Sleeper;
-import com.wboard.server.ipc.RpcServer;
-import com.wboard.server.ipc.RpcServerProtocol;
-import com.wboard.common.conf.Configuration;
 import com.wboard.common.model.DrawableObject;
 import com.wboard.common.model.Room;
 import com.wboard.common.model.User;
-import com.wboard.common.protocol.ClientProtocol;
+import com.wboard.common.protocol.ServerProtocol;
 
-public class WBoardServer extends Thread implements Server, ClientProtocol {
+public class WBoardServer extends Thread implements Server, ServerProtocol {
 	
 	public static final long versionID = 101L;
 	
-	private static final Log LOG = LogFactory.getLog(WBoardServer.SERVERNAME);
+	public static final Log LOG = LogFactory.getLog(WBoardServer.SERVERNAME);
 
 	private final static String SERVERNAME = "WBoardServer";
 	
@@ -28,25 +28,37 @@ public class WBoardServer extends Thread implements Server, ClientProtocol {
 
 	// the server address
 	private final InetSocketAddress isa;
-
+	
 	// The flag for checking if the server is running
 	private volatile boolean running = false;
 
-	private ArrayList<Room> rList;
-	private ArrayList<User> uList;
+	private ArrayList<Room> roomList;
+	private ArrayList<User> userList;
 
-	RpcServerProtocol rpcServer = new RpcServer();
+	RpcServer rpcServer;
 
 	// ***********
 	// Constructor
 	// ***********
 	
-	public WBoardServer(Configuration conf) {
-		rList = new ArrayList<Room>();
-		uList = new ArrayList<User>();
+	public WBoardServer(Configuration conf) throws IOException {
+		roomList = new ArrayList<Room>();
+		userList = new ArrayList<User>();
 		this.conf = conf;
-
-		this.isa = this.rpcServer.getListenerAddress();
+		
+		String hostname = conf.get("wboard.server.hostname", "localhost");
+		int port = conf.getInt("wboard.server.port", 5000);
+		this.isa = new InetSocketAddress(hostname, port);
+		
+		 this.rpcServer = HBaseRPC.getServer(this,
+			      new Class<?>[]{ServerProtocol.class},
+			        isa.getHostName(), 
+			        isa.getPort(),
+			        10, // handler count
+			        10, // meta handler count
+			        false, // verbose
+			        conf, 
+			        10); //highPriorityLevel
 	}
 	
 	// ****************
@@ -57,7 +69,7 @@ public class WBoardServer extends Thread implements Server, ClientProtocol {
 	public boolean createRoom(String title) {
 		Room r;
 		r = new Room(title);
-		if(rList.add(r)){
+		if(roomList.add(r)){
 			LOG.info("Room " + title + " has successfully crreated. Room id: " + r.getId());
 			return true;
 		}else{
@@ -69,7 +81,7 @@ public class WBoardServer extends Thread implements Server, ClientProtocol {
 	public boolean createUser(String name) {
 		User u;
 		u = new User(name);
-		if(uList.add(u)){
+		if(userList.add(u)){
 			LOG.info("User " + name + " has successfully crreated. User id: " + u.getId());
 			return true;
 		}else{
@@ -82,8 +94,8 @@ public class WBoardServer extends Thread implements Server, ClientProtocol {
 		User u;
 		Room r;
 		try {
-			u = uList.get(userid);
-			r = rList.get(roomid);
+			u = userList.get(userid);
+			r = roomList.get(roomid);
 			r.addUser(u);
 			LOG.info("User " + u.getId() + " has successfully joined the room: " + roomid);
 		} catch (Exception e) {

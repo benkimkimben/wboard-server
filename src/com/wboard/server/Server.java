@@ -19,22 +19,23 @@
  */
 package com.wboard.server;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Stoppable;
 
-import com.wboard.common.conf.Configuration;
 
 /**
  * Interface of server operations
  */
 public interface Server extends Stoppable, Runnable {
-  /**
-   * Gets the configuration object for this server.
-   */
-  public Configuration getConfiguration();
+	/**
+	 * Gets the configuration object for this server.
+	 */
+	public Configuration getConfiguration();
 
-  /**
-   * Gets the unique server name for this server.
-   * @return unique server name
-   */
-  public String getServerName();
+	/**
+	 * Gets the unique server name for this server.
+	 * @return unique server name
+	 */
+	public String getServerName();
+
 }
