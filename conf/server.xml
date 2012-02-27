@@ -4,7 +4,7 @@
 <configuration>
 	<property>
 		<name>wboard.server.host</name>
-		<value>localhost</value>
+		<value>10.250.64.1</value>
 	</property>
 	<property>
 		<name>wboard.server.port</name>
