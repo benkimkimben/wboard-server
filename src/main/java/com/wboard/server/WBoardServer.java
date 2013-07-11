@@ -4,126 +4,51 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.ipc.HBaseRPC;
-import org.apache.hadoop.hbase.ipc.RpcServer;
-import org.apache.hadoop.hbase.util.Sleeper;
-import com.wboard.common.model.DrawableObject;
-import com.wboard.common.model.Room;
-import com.wboard.common.model.WUser;
-import com.wboard.common.protocol.ServerProtocol;
+import org.apache.log4j.Logger;
+
+import com.wboard.server.Server;
+import com.wboard.server.ServerProtocol;
+import com.wboard.server.model.Board;
+import com.wboard.server.model.Drawable;
+import com.wboard.server.model.User;
 
 public class WBoardServer extends Thread implements Server, ServerProtocol {
 
-	public static final Log LOG = LogFactory.getLog(WBoardServer.class);
+	public static final Logger LOG = Logger.getLogger(WBoardServer.class);
 
 	private final static String SERVERNAME = "WBoardServer";
 
-	// The configuration for the Master
-	private final Configuration conf;
-
-	// the server address
 	private final InetSocketAddress isa;
 
 	// The flag for checking if the server is running
 	private volatile boolean running = false;
 
-	private ArrayList<Room> roomList;
-	private ArrayList<WUser> userList;
+	private ArrayList<Board> boardList;
+	private ArrayList<User> userList;
 
-	RpcServer rpcServer;
 
 	// ***********
 	// Constructor
 	// ***********
 
-	public WBoardServer(Configuration conf) throws IOException {
-		roomList = new ArrayList<Room>();
-		userList = new ArrayList<WUser>();
-		this.conf = conf;
+	public WBoardServer() throws IOException {
+		boardList = new ArrayList<Board>();
+		userList = new ArrayList<User>();
 
-		String hostname = conf.get("wboard.server.host");
-		int port = conf.getInt("wboard.server.port", 5000);
+		String hostname = "localhost"; //"wboard.server.host";
+		int port = 5000; //"wboard.server.port"
 		this.isa = new InetSocketAddress(hostname, port);
 
-		this.rpcServer = HBaseRPC.getServer(this,
-				new Class<?>[]{ServerProtocol.class},
-				isa.getHostName(), 
-				isa.getPort(),
-				1, // handler count
-				1, // meta handler count
-				false, // verbose
-				conf, 
-				10); //highPriorityLevel
-		this.LOG.info("WBoardServer has created: " + hostname + ":" + port);
+		
+		LOG.info("WBoardServer has created: " + hostname + ":" + port);
 	}
 
 	// ****************
 	// Client Protocol - com.wboard.server.protocol.ClientProtocol
 	// ****************
 
-	@Override
-	public boolean createRoom(String title) {
-		Room r;
-		r = new Room(title);
-		if(roomList.add(r)){
-			LOG.info("Room " + title + " has successfully crreated. Room id: " + r.getId());
-			return true;
-		}else{
-			LOG.error("Failed to create room " + title);
-			return false;
-		}
-	}
-	@Override
-	public boolean createUser(String name) {
-		WUser u;
-		u = new WUser(name);
-		if(userList.add(u)){
-			LOG.info("User " + name + " has successfully crreated. User id: " + u.getId());
-			return true;
-		}else{
-			LOG.error("Failed to create room " + name);
-			return false;
-		}
-	}
-	@Override
-	public boolean joinRoom(int roomid, int userid) {
-		WUser u;
-		Room r;
-		try {
-			u = userList.get(userid);
-			r = roomList.get(roomid);
-			r.addUser(u);
-			LOG.info("User " + u.getId() + " has successfully joined the room: " + roomid);
-		} catch (Exception e) {
-			LOG.error("User " + userid + " was unable to join the room: " + roomid);
-			return false;
-		}
-		return true;
-	}
-
-	// ****************
-	// Server Operation
-	// ****************
-
-	/**
-	 * Get the configuration of this server
-	 */
-	@Override
-	public Configuration getConfiguration() {
-		return conf;
-	}
-
-	/**
-	 * Initialize this server
-	 */
-	private void initialize(){
-		this.running = true;
-
-	}
 
 	/**
 	 * Start this server
@@ -135,99 +60,76 @@ public class WBoardServer extends Thread implements Server, ServerProtocol {
 			// We are either the active master or we were asked to shutdown
 			if (this.running) {
 
-				rpcServer.start();
+				
 				loop();
 			}
 		} catch (Throwable t) {
-			stop("Something went wrong with the server.");
+			stop();
 		} finally {		}
 	}
 
-	// Check if we should stop every second.
-	Sleeper stopSleeper = new Sleeper(1000, this);
-
+	
 	/**
 	 * Helper for run()
+	 * @throws InterruptedException 
 	 */
-	private void loop() {
+	private void loop() throws InterruptedException {
 		while (this.running) {
-			stopSleeper.sleep();
+			TimeUnit.SECONDS.sleep(1);
 		}
 	}
 
-	/**
-	 * DONE: 
-	 * Check if the server is stopped
-	 */
-	@Override
-	public boolean isStopped() {
-		return !this.running;
-	}
-
-	/**
-	 * TODO
-	 * Stop this server
-	 */
-	@Override
-	public void stop(String arg0) {
-		// TODO Auto-generated method stub
-
-	}
-
-	/**
-	 * Return the name of this server
-	 */
-	@Override
-	public String getServerName() {
-		return SERVERNAME;
-	}
-
-	/**
-	 * Return the version of this protocol
-	 */
-	@Override
-	public long getProtocolVersion(String arg0, long arg1) throws IOException {
-		return versionID;
-	}
-	/**
-	 * TODO
-	 */
-	@Override
-	public void draw(int roomid, DrawableObject obj) {
-		// TODO Auto-generated method stub		
-	}
-
-	/**
-	 * TODO
-	 */
-	@Override
-	public void erase(int roomid, int userid, int objid) {
-		// TODO Auto-generated method stub
-
-	}
-	
 
 	/**
 	 * @param args
 	 * @throws Exception 
 	 */
 	public static void main(String[] args) throws Exception {
-		Configuration conf;
-		conf = new Configuration(false);
-		conf.addResource("server.xml");
-		conf.dumpConfiguration(conf, new OutputStreamWriter(System.out));
-		System.out.println(conf);
 		
-		
+	}
 
-		Server wbs = null;
+	public boolean joinBoard(int boardid, int userid) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public boolean createBoard(String title) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public boolean createUser(String name) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public void draw(int roomid, Drawable obj) {
+		// TODO Auto-generated method stub
 		
-		try {
-			wbs = new WBoardServer(conf);
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(0);
-		}
-		wbs.run();
+	}
+
+	public void erase(int roomid, int userid, int objid) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public long getProtocolVersion() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	public String getServerName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public void initialize() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public boolean isRunning() {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }
