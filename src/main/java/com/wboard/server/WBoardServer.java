@@ -16,11 +16,10 @@ import com.wboard.server.model.User;
 
 public class WBoardServer extends Thread implements Server, ServerProtocol {
 
+	public static final WBoardServer server = new WBoardServer();
 	public static final Logger LOG = Logger.getLogger(WBoardServer.class);
 
 	private final static String SERVERNAME = "WBoardServer";
-
-	private final InetSocketAddress isa;
 
 	// The flag for checking if the server is running
 	private volatile boolean running = false;
@@ -33,16 +32,13 @@ public class WBoardServer extends Thread implements Server, ServerProtocol {
 	// Constructor
 	// ***********
 
-	public WBoardServer() throws IOException {
+	public WBoardServer() {
 		boardList = new ArrayList<Board>();
 		userList = new ArrayList<User>();
 
-		String hostname = "localhost"; //"wboard.server.host";
-		int port = 5000; //"wboard.server.port"
-		this.isa = new InetSocketAddress(hostname, port);
+		LOG.info("WBoardServer has created");
 
 		
-		LOG.info("WBoardServer has created: " + hostname + ":" + port);
 	}
 
 	// ****************
@@ -120,7 +116,7 @@ public class WBoardServer extends Thread implements Server, ServerProtocol {
 
 	public String getServerName() {
 		// TODO Auto-generated method stub
-		return null;
+		return SERVERNAME;
 	}
 
 	public void initialize() {
@@ -129,6 +125,11 @@ public class WBoardServer extends Thread implements Server, ServerProtocol {
 	}
 
 	public boolean isRunning() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public boolean process(Message msg) {
 		// TODO Auto-generated method stub
 		return false;
 	}

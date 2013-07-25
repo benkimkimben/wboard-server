@@ -17,6 +17,7 @@ public interface Server {
 	public void run();
 	
 	public void initialize();
+	
 	public boolean isRunning() ;
 
 
